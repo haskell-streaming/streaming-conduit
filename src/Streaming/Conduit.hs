@@ -40,4 +40,4 @@ fromStreamSource = void . fromStream
 -- | A more specialised variant of 'fromStream' that is subject to
 --   fusion.
 fromStreamProducer :: (Monad m) => Stream (Of a) m r -> Producer m a
-fromStreamProducer = unfoldM (fmap (either (const Nothing) Just) . S.next)
+fromStreamProducer = unfoldM S.uncons . void
