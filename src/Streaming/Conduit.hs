@@ -50,3 +50,10 @@ toStream cnd = runConduit (cnd' .| mkStream)
     mkStream = CL.mapM_ S.yield
 
     cnd' = hoist lift cnd
+
+-- | Treat a 'ConduitM' as a function between 'Stream's.  Subject to
+--   fusion.
+asStream :: (Monad m) => ConduitM i o m () -> Stream (Of i) m () -> Stream (Of o) m ()
+asStream cnd stream = toStream (src .| cnd)
+  where
+    src = fromStreamProducer stream
