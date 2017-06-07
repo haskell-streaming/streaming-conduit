@@ -14,9 +14,10 @@ module Streaming.Conduit where
 
 import           Control.Monad             (void)
 import           Control.Monad.Trans.Class (lift)
-import           Data.Conduit              (ConduitM, Producer, Source, yield)
+import           Data.Conduit              (ConduitM, Producer, Source, await,
+                                            runConduit, yield, (.|))
 import           Data.Conduit.List         (unfoldM)
-import           Streaming                 (Of, Stream)
+import           Streaming                 (Of, Stream, effect)
 import qualified Streaming.Prelude         as S
 
 --------------------------------------------------------------------------------
@@ -41,3 +42,14 @@ fromStreamSource = void . fromStream
 --   fusion.
 fromStreamProducer :: (Monad m) => Stream (Of a) m r -> Producer m a
 fromStreamProducer = unfoldM S.uncons . void
+
+-- | Convert a 'Source' to a 'Stream'.
+toStream :: (Monad m) => Source m o -> Stream (Of o) m ()
+toStream cnd = effect $ runConduit (cnd .| mkStream)
+  where
+    mkStream = go
+      where
+        go = do mo <- await
+                case mo of
+                  Nothing -> return (return ())
+                  Just o  -> S.cons o <$> go
