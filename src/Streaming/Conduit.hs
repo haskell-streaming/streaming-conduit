@@ -8,9 +8,25 @@
    Maintainer  : Ivan.Miljenovic@gmail.com
 
 
+  This provides interoperability between the
+  <http://hackage.haskell.org/package/streaming streaming> and
+  <http://hackage.haskell.org/package/conduit conduit> libraries.
+
+  Not only can you convert between one streaming data representation
+  to the other, there is also support to use one in the middle of a
+  pipeline.
 
  -}
-module Streaming.Conduit where
+module Streaming.Conduit
+  ( -- * Converting from Streams
+    fromStream
+  , fromStreamSource
+  , fromStreamProducer
+  , asConduit
+    -- * Converting from Conduits
+  , toStream
+  , asStream
+  ) where
 
 import           Control.Monad             (join, void)
 import           Control.Monad.Trans.Class (lift)
@@ -40,6 +56,10 @@ fromStreamProducer :: (Monad m) => Stream (Of a) m r -> Producer m a
 fromStreamProducer = CL.unfoldM S.uncons . void
 
 -- | Convert a 'Source' to a 'Stream'.  Subject to fusion.
+--
+--   It is not possible to generalise this to be a 'ConduitM' as input
+--   values are required.  If you need such functionality, see
+--   'asStream'.
 toStream :: (Monad m) => Producer m o -> Stream (Of o) m ()
 toStream cnd = runConduit (cnd' .| mkStream)
   where
