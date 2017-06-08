@@ -12,9 +12,9 @@
  -}
 module Streaming.Conduit where
 
-import           Control.Monad             (void)
+import           Control.Monad             (join, void)
 import           Control.Monad.Trans.Class (lift)
-import           Data.Conduit              (ConduitM, Producer, Source,
+import           Data.Conduit              (ConduitM, Producer, Source, await,
                                             runConduit, yield, (.|))
 import qualified Data.Conduit.List         as CL
 import           Streaming                 (Of, Stream, hoist)
@@ -57,3 +57,14 @@ asStream :: (Monad m) => ConduitM i o m () -> Stream (Of i) m () -> Stream (Of o
 asStream cnd stream = toStream (src .| cnd)
   where
     src = fromStreamProducer stream
+
+-- | Treat a function between 'Stream's as a 'ConduitM'.  May be
+--   subject to fusion.
+asConduit :: (Monad m) => (Stream (Of i) m () -> Stream (Of o) m r) -> ConduitM i o m ()
+asConduit f = join . fmap (fromStreamProducer . f) $ go
+  where
+    -- Probably not the best way to go about it,
+    go = do mo <- await
+            case mo of
+              Nothing -> return (return ())
+              Just o  -> S.cons o <$> go
