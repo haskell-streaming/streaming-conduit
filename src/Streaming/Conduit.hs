@@ -16,6 +16,10 @@
   to the other, there is also support to use one in the middle of a
   pipeline.
 
+  No 'B.ByteString'-based analogues of 'asConduit' and 'asStream' are
+  provided as it would be of strictly less utility, requiring both the
+  input and output of the 'ConduitM' to be 'ByteString'.
+
  -}
 module Streaming.Conduit
   ( -- * Converting from Streams
@@ -23,13 +27,20 @@ module Streaming.Conduit
   , fromStreamSource
   , fromStreamProducer
   , asConduit
+    -- ** ByteString support
+  , fromBStream
+  , fromBStreamProducer
     -- * Converting from Conduits
   , toStream
   , asStream
+    -- ** ByteString support
+  , toBStream
   ) where
 
 import           Control.Monad             (join, void)
 import           Control.Monad.Trans.Class (lift)
+import           Data.ByteString           (ByteString)
+import qualified Data.ByteString.Streaming as B
 import           Data.Conduit              (Conduit, ConduitM, Producer, Source,
                                             await, runConduit, yield, (.|))
 import qualified Data.Conduit.List         as CL
@@ -55,7 +66,17 @@ fromStreamSource = void . fromStream
 fromStreamProducer :: (Monad m) => Stream (Of a) m r -> Producer m a
 fromStreamProducer = CL.unfoldM S.uncons . void
 
--- | Convert a 'Source' to a 'Stream'.  Subject to fusion.
+-- | Convert a streaming 'B.ByteString' into a 'Source'; you probably
+--   want to use 'fromBStreamProducer' instead.
+fromBStream :: (Monad m) => B.ByteString m r -> Source m ByteString
+fromBStream = join . lift . B.foldrChunks ((>>) . yield) (return ())
+
+-- | A more specialised variant of 'fromBStream' that is subject to
+--   fusion.
+fromBStreamProducer :: (Monad m) => B.ByteString m r -> Producer m ByteString
+fromBStreamProducer = CL.unfoldM B.unconsChunk . void
+
+-- | Convert a 'Producer' to a 'Stream'.  Subject to fusion.
 --
 --   It is not possible to generalise this to be a 'ConduitM' as input
 --   values are required.  If you need such functionality, see
@@ -66,6 +87,11 @@ toStream cnd = runConduit (cnd' .| mkStream)
     mkStream = CL.mapM_ S.yield
 
     cnd' = hoist lift cnd
+
+-- | Convert a 'Producer' to a 'B.ByteString' stream.  Subject to
+--   fusion.
+toBStream :: (Monad m) => Producer m ByteString -> B.ByteString m ()
+toBStream cnd = runConduit (hoist lift cnd .| CL.mapM_ B.chunk)
 
 -- | Treat a 'Conduit' as a function between 'Stream's.  Subject to
 --   fusion.
