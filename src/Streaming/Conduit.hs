@@ -63,7 +63,7 @@ asStream cnd stream = toStream (src .| cnd)
 asConduit :: (Monad m) => (Stream (Of i) m () -> Stream (Of o) m r) -> Conduit i m o
 asConduit f = join . fmap (fromStreamProducer . f) $ go
   where
-    -- Probably not the best way to go about it,
+    -- Probably not the best way to go about it, but it works.
     go = do mo <- await
             case mo of
               Nothing -> return (return ())
