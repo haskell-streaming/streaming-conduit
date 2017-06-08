@@ -24,3 +24,14 @@ library
                      , transformers >= 0.2
   hs-source-dirs:      src
   default-language:    Haskell2010
+
+test-suite conversions
+  type:                exitcode-stdio-1.0
+  main-is:             conversions.hs
+  build-depends:       streaming-conduit
+                     , base
+                     , conduit
+                     , hspec == 2.4.*
+                     , streaming
+  hs-source-dirs:      test
+  default-language:    Haskell2010
