@@ -17,7 +17,8 @@ import           Control.Monad.Trans.Class (lift)
 import           Data.Conduit              (Conduit, ConduitM, Producer, Source,
                                             await, runConduit, yield, (.|))
 import qualified Data.Conduit.List         as CL
-import           Streaming                 (Of, Stream, hoist)
+import           Streaming                 (Of, Stream, hoist, lazily,
+                                            streamFold)
 import qualified Streaming.Prelude         as S
 
 --------------------------------------------------------------------------------
@@ -25,13 +26,8 @@ import qualified Streaming.Prelude         as S
 -- | The result of this is slightly generic than a 'Source' or a
 --   'Producer'.  If it fits in the types you want, you may wish to use
 --   'fromStreamProducer' which is subject to fusion.
-fromStream :: (Monad m) => Stream (Of a) m r -> ConduitM i a m r
-fromStream = go
-  where
-    go stream = do eras <- lift (S.next stream)
-                   case eras of
-                     Left r             -> return r
-                     Right (a, stream') -> yield a >> go stream'
+fromStream :: (Monad m) => Stream (Of o) m r -> ConduitM i o m r
+fromStream = streamFold return (join . lift) (uncurry ((>>) . yield) . lazily)
 
 -- | A type-specialised variant of 'fromStream' that ignores the
 --   result.
