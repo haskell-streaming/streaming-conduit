@@ -40,7 +40,7 @@ fromStreamProducer :: (Monad m) => Stream (Of a) m r -> Producer m a
 fromStreamProducer = CL.unfoldM S.uncons . void
 
 -- | Convert a 'Source' to a 'Stream'.  Subject to fusion.
-toStream :: (Monad m) => Source m o -> Stream (Of o) m ()
+toStream :: (Monad m) => Producer m o -> Stream (Of o) m ()
 toStream cnd = runConduit (cnd' .| mkStream)
   where
     mkStream = CL.mapM_ S.yield
