@@ -1,5 +1,5 @@
 name:                streaming-conduit
-version:             0.1.0
+version:             0.1.0.0
 synopsis:            Bidirectional support between the streaming and conduit libraries
 description:         Allow interoperability between the streaming and conduit data streaming ecosystems.
 license:             MIT
@@ -7,7 +7,7 @@ license-file:        LICENSE
 author:              Ivan Lazar Miljenovic
 maintainer:          Ivan.Miljenovic@gmail.com
 copyright:           Ivan Lazar Miljenovic
-category:            Data
+category:            Data, Streaming
 build-type:          Simple
 extra-source-files:  ChangeLog.md, README.md
 cabal-version:       >=1.10
