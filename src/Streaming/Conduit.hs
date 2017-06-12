@@ -42,19 +42,17 @@ import           Control.Monad.Trans.Class (lift)
 import           Data.ByteString           (ByteString)
 import qualified Data.ByteString.Streaming as B
 import           Data.Conduit              (Conduit, ConduitM, Producer, Source,
-                                            await, runConduit, yield, (.|))
+                                            await, runConduit, (.|))
 import qualified Data.Conduit.List         as CL
-import           Streaming                 (Of, Stream, hoist, lazily,
-                                            streamFold)
+import           Streaming                 (Of, Stream, hoist)
 import qualified Streaming.Prelude         as S
 
 --------------------------------------------------------------------------------
 
 -- | The result of this is slightly generic than a 'Source' or a
---   'Producer'.  If it fits in the types you want, you may wish to use
---   'fromStreamProducer' which is subject to fusion.
+--   'Producer'.  Subject to fusion.
 fromStream :: (Monad m) => Stream (Of o) m r -> ConduitM i o m r
-fromStream = streamFold return (join . lift) (uncurry ((>>) . yield) . lazily)
+fromStream = CL.unfoldEitherM S.next
 
 -- | A type-specialised variant of 'fromStream' that ignores the
 --   result.
@@ -66,13 +64,11 @@ fromStreamSource = void . fromStream
 fromStreamProducer :: (Monad m) => Stream (Of a) m r -> Producer m a
 fromStreamProducer = CL.unfoldM S.uncons . void
 
--- | Convert a streaming 'B.ByteString' into a 'Source'; you probably
---   want to use 'fromBStreamProducer' instead.
-fromBStream :: (Monad m) => B.ByteString m r -> Source m ByteString
-fromBStream = join . lift . B.foldrChunks ((>>) . yield) (return ())
+-- | Convert a streaming 'B.ByteString' into a 'Source'; subject to fusion.
+fromBStream :: (Monad m) => B.ByteString m r -> ConduitM i ByteString m r
+fromBStream = CL.unfoldEitherM B.nextChunk
 
--- | A more specialised variant of 'fromBStream' that is subject to
---   fusion.
+-- | A more specialised variant of 'fromBStream'.
 fromBStreamProducer :: (Monad m) => B.ByteString m r -> Producer m ByteString
 fromBStreamProducer = CL.unfoldM B.unconsChunk . void
 
@@ -82,11 +78,7 @@ fromBStreamProducer = CL.unfoldM B.unconsChunk . void
 --   values are required.  If you need such functionality, see
 --   'asStream'.
 toStream :: (Monad m) => Producer m o -> Stream (Of o) m ()
-toStream cnd = runConduit (cnd' .| mkStream)
-  where
-    mkStream = CL.mapM_ S.yield
-
-    cnd' = hoist lift cnd
+toStream cnd = runConduit (hoist lift cnd .| CL.mapM_ S.yield)
 
 -- | Convert a 'Producer' to a 'B.ByteString' stream.  Subject to
 --   fusion.
@@ -96,14 +88,12 @@ toBStream cnd = runConduit (hoist lift cnd .| CL.mapM_ B.chunk)
 -- | Treat a 'Conduit' as a function between 'Stream's.  Subject to
 --   fusion.
 asStream :: (Monad m) => Conduit i m o -> Stream (Of i) m () -> Stream (Of o) m ()
-asStream cnd stream = toStream (src .| cnd)
-  where
-    src = fromStreamProducer stream
+asStream cnd stream = toStream (fromStream stream .| cnd)
 
 -- | Treat a function between 'Stream's as a 'Conduit'.  May be
 --   subject to fusion.
-asConduit :: (Monad m) => (Stream (Of i) m () -> Stream (Of o) m r) -> Conduit i m o
-asConduit f = join . fmap (fromStreamProducer . f) $ go
+asConduit :: (Monad m) => (Stream (Of i) m () -> Stream (Of o) m r) -> ConduitM i o m r
+asConduit f = join . fmap (fromStream . f) $ go
   where
     -- Probably not the best way to go about it, but it works.
     go = do mo <- await
