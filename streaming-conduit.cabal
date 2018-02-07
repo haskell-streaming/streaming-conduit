@@ -15,7 +15,7 @@ tested-with:         GHC == 7.10.2, GHC == 8.0.2, GHC == 8.1.*
 
 source-repository head
   type:     git
-  location: https://github.com/ivan-m/streaming-conduit.git
+  location: https://github.com/haskell-streaming/streaming-conduit.git
 
 library
   exposed-modules:     Streaming.Conduit

@@ -1,7 +1,7 @@
 streaming-conduit
 =================
 
-[![Hackage](https://img.shields.io/hackage/v/streaming-conduit.svg)](https://hackage.haskell.org/package/streaming-conduit) [![Build Status](https://travis-ci.org/ivan-m/streaming-conduit.svg)](https://travis-ci.org/ivan-m/streaming-conduit)
+[![Hackage](https://img.shields.io/hackage/v/streaming-conduit.svg)](https://hackage.haskell.org/package/streaming-conduit) [![Build Status](https://travis-ci.org/haskell-streaming/streaming-conduit.svg)](https://travis-ci.org/haskell-streaming/streaming-conduit)
 
 Bidirectional support between the [streaming] and [conduit] libraries.
 
