@@ -1,5 +1,9 @@
 # Revision history for streaming-conduit
 
+## 0.1.2.1 -- 2018-02-08
+
+* Bump dependency on streaming to support 0.2.0.0.
+
 ## 0.1.2.0 -- 2017-06-12
 
 * Better Stream -> Conduit conversions, allowing for more fusion and
