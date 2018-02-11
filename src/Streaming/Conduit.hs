@@ -42,9 +42,9 @@ import           Control.Monad.Trans.Class (lift)
 import           Data.ByteString           (ByteString)
 import qualified Data.ByteString.Streaming as B
 import           Data.Conduit              (Conduit, ConduitM, Producer, Source,
-                                            await, runConduit, (.|))
+                                            await, runConduit, transPipe, (.|))
 import qualified Data.Conduit.List         as CL
-import           Streaming                 (Of, Stream, hoist)
+import           Streaming                 (Of, Stream)
 import qualified Streaming.Prelude         as S
 
 --------------------------------------------------------------------------------
@@ -78,12 +78,12 @@ fromBStreamProducer = CL.unfoldM B.unconsChunk . void
 --   values are required.  If you need such functionality, see
 --   'asStream'.
 toStream :: (Monad m) => Producer m o -> Stream (Of o) m ()
-toStream cnd = runConduit (hoist lift cnd .| CL.mapM_ S.yield)
+toStream cnd = runConduit (transPipe lift cnd .| CL.mapM_ S.yield)
 
 -- | Convert a 'Producer' to a 'B.ByteString' stream.  Subject to
 --   fusion.
 toBStream :: (Monad m) => Producer m ByteString -> B.ByteString m ()
-toBStream cnd = runConduit (hoist lift cnd .| CL.mapM_ B.chunk)
+toBStream cnd = runConduit (transPipe lift cnd .| CL.mapM_ B.chunk)
 
 -- | Treat a 'Conduit' as a function between 'Stream's.  Subject to
 --   fusion.
