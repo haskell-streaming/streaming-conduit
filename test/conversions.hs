@@ -40,6 +40,8 @@ main = hspec $ do
       testPipeline (\xs f -> streamList . S.map f $ toStream (C.sourceList xs))
     prop "asStream" $
       testPipeline (\xs f -> streamList . asStream (C.map f) $ S.each xs)
+    prop "sinkStream" $
+      testPipeline (\xs f -> runIdentity $ sinkStream C.consume $ S.map f $ S.each xs)
 
 conduitList :: C.Source Identity a -> [a]
 conduitList = runIdentity . C.sourceToList
