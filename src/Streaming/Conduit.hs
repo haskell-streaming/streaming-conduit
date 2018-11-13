@@ -36,6 +36,7 @@ module Streaming.Conduit
   , sinkStream
     -- ** ByteString support
   , toBStream
+  , sinkBStream
   ) where
 
 import           Control.Monad             (join, void)
@@ -95,6 +96,11 @@ asStream cnd stream = toStream (fromStream stream .| cnd)
 --   Subject to fusion.
 sinkStream :: (Monad m) => Consumer i m r -> Stream (Of i) m () -> m r
 sinkStream cns stream = runConduit (fromStream stream .| cns)
+
+-- | Treat a 'Consumer' as a function which consumes a 'B.ByteString'.
+--   Subject to fusion.
+sinkBStream :: (Monad m) => Consumer ByteString m r -> B.ByteString m () -> m r
+sinkBStream cns stream = runConduit (fromBStream stream .| cns)
 
 -- | Treat a function between 'Stream's as a 'Conduit'.  May be
 --   subject to fusion.
