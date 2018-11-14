@@ -33,15 +33,17 @@ module Streaming.Conduit
     -- * Converting from Conduits
   , toStream
   , asStream
+  , sinkStream
     -- ** ByteString support
   , toBStream
+  , sinkBStream
   ) where
 
 import           Control.Monad             (join, void)
 import           Control.Monad.Trans.Class (lift)
 import           Data.ByteString           (ByteString)
 import qualified Data.ByteString.Streaming as B
-import           Data.Conduit              (Conduit, ConduitM, Producer, Source,
+import           Data.Conduit              (Conduit, ConduitM, Producer, Source, Consumer,
                                             await, runConduit, transPipe, (.|))
 import qualified Data.Conduit.List         as CL
 import           Streaming                 (Of, Stream)
@@ -89,6 +91,16 @@ toBStream cnd = runConduit (transPipe lift cnd .| CL.mapM_ B.chunk)
 --   fusion.
 asStream :: (Monad m) => Conduit i m o -> Stream (Of i) m () -> Stream (Of o) m ()
 asStream cnd stream = toStream (fromStream stream .| cnd)
+
+-- | Treat a 'Consumer' as a function which consumes a 'Stream'.
+--   Subject to fusion.
+sinkStream :: (Monad m) => Consumer i m r -> Stream (Of i) m () -> m r
+sinkStream cns stream = runConduit (fromStream stream .| cns)
+
+-- | Treat a 'Consumer' as a function which consumes a 'B.ByteString'.
+--   Subject to fusion.
+sinkBStream :: (Monad m) => Consumer ByteString m r -> B.ByteString m () -> m r
+sinkBStream cns stream = runConduit (fromBStream stream .| cns)
 
 -- | Treat a function between 'Stream's as a 'Conduit'.  May be
 --   subject to fusion.
