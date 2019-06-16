@@ -43,7 +43,7 @@ import           Control.Monad             (join, void)
 import           Control.Monad.Trans.Class (lift)
 import           Data.ByteString           (ByteString)
 import qualified Data.ByteString.Streaming as B
-import           Data.Conduit              (Conduit, ConduitM, Producer, Source, Consumer,
+import           Data.Conduit              (Conduit, ConduitM, ConduitT, Producer, Source, Consumer,
                                             await, runConduit, transPipe, (.|))
 import qualified Data.Conduit.List         as CL
 import           Streaming                 (Of, Stream)
@@ -84,7 +84,7 @@ toStream cnd = runConduit (transPipe lift cnd .| CL.mapM_ S.yield)
 
 -- | Convert a 'Producer' to a 'B.ByteString' stream.  Subject to
 --   fusion.
-toBStream :: (Monad m) => Producer m ByteString -> B.ByteString m ()
+toBStream :: (Monad m) => ConduitT () ByteString m () -> B.ByteString m ()
 toBStream cnd = runConduit (transPipe lift cnd .| CL.mapM_ B.chunk)
 
 -- | Treat a 'Conduit' as a function between 'Stream's.  Subject to
