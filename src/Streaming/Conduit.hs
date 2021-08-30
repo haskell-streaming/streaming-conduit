@@ -43,7 +43,7 @@ import           Control.Monad             (join, void)
 import           Control.Monad.Trans.Class (lift)
 import           Data.ByteString           (ByteString)
 import qualified Data.ByteString.Streaming as B
-import           Data.Conduit              (Conduit, ConduitM, Producer, Source, Consumer,
+import           Data.Conduit              (Conduit, ConduitM, ConduitT, Producer, Source, Consumer,
                                             await, runConduit, transPipe, (.|))
 import qualified Data.Conduit.List         as CL
 import           Streaming                 (Of, Stream)
