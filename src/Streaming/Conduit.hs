@@ -63,7 +63,7 @@ fromStreamSource = void . fromStream
 
 -- | A more specialised variant of 'fromStream' that is subject to
 --   fusion.
-fromStreamProducer :: (Monad m) => Stream (Of a) m r -> Producer m a
+fromStreamProducer :: (Monad m) => Stream (Of a) m r -> ConduitT i a m ()
 fromStreamProducer = CL.unfoldM S.uncons . void
 
 -- | Convert a streaming 'B.ByteString' into a 'Source'; subject to fusion.
@@ -71,7 +71,7 @@ fromBStream :: (Monad m) => B.ByteString m r -> ConduitM i ByteString m r
 fromBStream = CL.unfoldEitherM B.nextChunk
 
 -- | A more specialised variant of 'fromBStream'.
-fromBStreamProducer :: (Monad m) => B.ByteString m r -> Producer m ByteString
+fromBStreamProducer :: (Monad m) => B.ByteString m r -> ConduitT i ByteString m ()
 fromBStreamProducer = CL.unfoldM B.unconsChunk . void
 
 -- | Convert a 'Producer' to a 'Stream'.  Subject to fusion.
