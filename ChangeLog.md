@@ -1,5 +1,9 @@
 # Revision history for streaming-conduit
 
+## 0.1.3.0 -- 2023-05-13
+
+* Support `streaming-bytestring-0.3`
+
 ## 0.1.2.2 -- 2018-02-11
 
 * Add support for conduit-1.3.0.

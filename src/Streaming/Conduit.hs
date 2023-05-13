@@ -72,7 +72,7 @@ fromBStream = CL.unfoldEitherM B.nextChunk
 
 -- | A more specialised variant of 'fromBStream'.
 fromBStreamProducer :: (Monad m) => B.ByteString m r -> Producer m ByteString
-fromBStreamProducer = CL.unfoldM B.unconsChunk . void
+fromBStreamProducer = CL.unfoldEitherM B.unconsChunk . void
 
 -- | Convert a 'Producer' to a 'Stream'.  Subject to fusion.
 --
