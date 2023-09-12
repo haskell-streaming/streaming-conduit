@@ -43,7 +43,7 @@ import           Control.Monad             (join, void)
 import           Control.Monad.Trans.Class (lift)
 import           Data.ByteString           (ByteString)
 import qualified Data.ByteString.Streaming as B
-import           Data.Conduit              (Conduit, ConduitT, Producer, Source, Consumer,
+import           Data.Conduit              (Conduit, ConduitT, Producer, Consumer,
                                             await, runConduit, transPipe, (.|))
 import qualified Data.Conduit.List         as CL
 import           Streaming                 (Of, Stream)
@@ -58,21 +58,36 @@ fromStream = CL.unfoldEitherM S.next
 
 -- | A type-specialised variant of 'fromStream' that ignores the
 --   result.
-fromStreamSource :: (Monad m) => Stream (Of a) m r -> Source m a
+--
+-- It can return a Conduit @Source@:
+-- @
+-- fromStreamSource :: (Monad m) => Stream (Of o) m r -> Source m o
+-- @
+fromStreamSource :: (Monad m) => Stream (Of o) m r -> ConduitT () o m ()
 fromStreamSource = void . fromStream
 
 -- | A more specialised variant of 'fromStream' that is subject to
 --   fusion.
-fromStreamProducer :: (Monad m) => Stream (Of a) m r -> Producer m a
-fromStreamProducer = CL.unfoldM S.uncons . void
+--
+-- It can return a Conduit @Producer@:
+-- @
+-- fromStreamProducer :: (Monad m) => Stream (Of a) m r -> Producer m a
+-- @
+fromStreamProducer :: (Monad m) => Stream (Of o) m r -> ConduitT i o m r
+fromStreamProducer = CL.unfoldEitherM S.next
 
 -- | Convert a streaming 'B.ByteString' into a 'Source'; subject to fusion.
 fromBStream :: (Monad m) => B.ByteString m r -> ConduitT i ByteString m r
 fromBStream = CL.unfoldEitherM B.nextChunk
 
 -- | A more specialised variant of 'fromBStream'.
-fromBStreamProducer :: (Monad m) => B.ByteString m r -> Producer m ByteString
-fromBStreamProducer = CL.unfoldEitherM B.unconsChunk . void
+--
+-- It can return a Conduit @Producer@:
+-- @
+-- fromBStreamProducer :: (Monad m) => B.ByteString m r -> Producer m ByteString
+-- @
+fromBStreamProducer :: (Monad m) => B.ByteString m r -> ConduitT i ByteString m r
+fromBStreamProducer = CL.unfoldEitherM B.unconsChunk
 
 -- | Convert a 'Producer' to a 'Stream'.  Subject to fusion.
 --

@@ -1,5 +1,9 @@
 # Revision history for streaming-conduit
 
+## Unreleased (Minor) -- YYYY-MM-DD
+
+* Support GHC 9.0.
+
 ## 0.1.3.0 -- 2023-05-13
 
 * Support `streaming-bytestring-0.3`
