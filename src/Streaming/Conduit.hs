@@ -37,11 +37,12 @@ module Streaming.Conduit
   , sinkBStream
   ) where
 
-import           Control.Monad             (join, void)
+import           Control.Monad             (join)
 import           Data.ByteString           (ByteString)
 import           Data.Conduit              (await, runConduit, (.|))
 import           Data.Conduit.Internal     (ConduitT(..), Pipe(..))
 import qualified Data.Conduit.List         as CL
+import           Data.Functor              (void)
 import           Data.Void                 (Void)
 import           Streaming                 (Of, Stream)
 import qualified Streaming                 as S
