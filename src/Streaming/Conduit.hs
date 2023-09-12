@@ -18,7 +18,7 @@
 
   No 'B.ByteString'-based analogues of 'asConduit' and 'asStream' are
   provided as it would be of strictly less utility, requiring both the
-  input and output of the 'ConduitM' to be 'ByteString'.
+  input and output of the 'ConduitT' to be 'ByteString'.
 
  -}
 module Streaming.Conduit
@@ -43,7 +43,7 @@ import           Control.Monad             (join, void)
 import           Control.Monad.Trans.Class (lift)
 import           Data.ByteString           (ByteString)
 import qualified Data.ByteString.Streaming as B
-import           Data.Conduit              (Conduit, ConduitM, Producer, Source, Consumer,
+import           Data.Conduit              (Conduit, ConduitT, Producer, Source, Consumer,
                                             await, runConduit, transPipe, (.|))
 import qualified Data.Conduit.List         as CL
 import           Streaming                 (Of, Stream)
@@ -53,7 +53,7 @@ import qualified Streaming.Prelude         as S
 
 -- | The result of this is slightly generic than a 'Source' or a
 --   'Producer'.  Subject to fusion.
-fromStream :: (Monad m) => Stream (Of o) m r -> ConduitM i o m r
+fromStream :: (Monad m) => Stream (Of o) m r -> ConduitT i o m r
 fromStream = CL.unfoldEitherM S.next
 
 -- | A type-specialised variant of 'fromStream' that ignores the
@@ -67,7 +67,7 @@ fromStreamProducer :: (Monad m) => Stream (Of a) m r -> Producer m a
 fromStreamProducer = CL.unfoldM S.uncons . void
 
 -- | Convert a streaming 'B.ByteString' into a 'Source'; subject to fusion.
-fromBStream :: (Monad m) => B.ByteString m r -> ConduitM i ByteString m r
+fromBStream :: (Monad m) => B.ByteString m r -> ConduitT i ByteString m r
 fromBStream = CL.unfoldEitherM B.nextChunk
 
 -- | A more specialised variant of 'fromBStream'.
@@ -76,7 +76,7 @@ fromBStreamProducer = CL.unfoldEitherM B.unconsChunk . void
 
 -- | Convert a 'Producer' to a 'Stream'.  Subject to fusion.
 --
---   It is not possible to generalise this to be a 'ConduitM' as input
+--   It is not possible to generalise this to be a 'ConduitT' as input
 --   values are required.  If you need such functionality, see
 --   'asStream'.
 toStream :: (Monad m) => Producer m o -> Stream (Of o) m ()
@@ -104,7 +104,7 @@ sinkBStream cns stream = runConduit (fromBStream stream .| cns)
 
 -- | Treat a function between 'Stream's as a 'Conduit'.  May be
 --   subject to fusion.
-asConduit :: (Monad m) => (Stream (Of i) m () -> Stream (Of o) m r) -> ConduitM i o m r
+asConduit :: (Monad m) => (Stream (Of i) m () -> Stream (Of o) m r) -> ConduitT i o m r
 asConduit f = join . fmap (fromStream . f) $ go
   where
     -- Probably not the best way to go about it, but it works.

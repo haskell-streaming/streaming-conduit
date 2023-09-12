@@ -21,7 +21,7 @@ library
   exposed-modules:     Streaming.Conduit
   build-depends:       base >=4.6 && <5
                      , bytestring
-                     , conduit >= 1.2.11 && < 1.4
+                     , conduit >= 1.3.0 && < 1.4
                      , streaming >= 0.1.3.0 && < 0.3
                      , streaming-bytestring >= 0.3 && < 0.4
                      , transformers >= 0.2
