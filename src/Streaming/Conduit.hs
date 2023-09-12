@@ -38,13 +38,13 @@ module Streaming.Conduit
   ) where
 
 import           Control.Monad             (join, void)
-import           Control.Monad.Trans.Class (lift)
 import           Data.ByteString           (ByteString)
-import           Data.Conduit              (ConduitT,
-                                            await, runConduit, transPipe, (.|))
+import           Data.Conduit              (await, runConduit, (.|))
+import           Data.Conduit.Internal     (ConduitT(..), Pipe(..))
 import qualified Data.Conduit.List         as CL
 import           Data.Void                 (Void)
 import           Streaming                 (Of, Stream)
+import qualified Streaming                 as S
 import           Streaming.ByteString      (ByteStream)
 import qualified Streaming.ByteString      as B
 import qualified Streaming.Prelude         as S
@@ -99,8 +99,14 @@ fromBStreamProducer = CL.unfoldEitherM B.unconsChunk
 -- @
 -- toStream :: (Monad m) => Producer m o -> Stream (Of o) m ()
 -- @
-toStream :: (Monad m) => ConduitT () o m () -> Stream (Of o) m ()
-toStream cnd = runConduit (transPipe lift cnd .| CL.mapM_ S.yield)
+toStream :: (Monad m) => ConduitT () o m r -> Stream (Of o) m r
+toStream (ConduitT k) = go $ k Done
+  where
+    go (HaveOutput p o) = S.yield o *> go p
+    go (NeedInput _ c) = go $ c ()
+    go (Done r) = pure r
+    go (PipeM mp) = S.effect $ go <$> mp
+    go (Leftover p _) = go p
 
 -- | Convert a 'Producer' to a 'ByteStream' stream.  Subject to
 --   fusion.
@@ -109,8 +115,14 @@ toStream cnd = runConduit (transPipe lift cnd .| CL.mapM_ S.yield)
 -- @
 -- toBStream :: (Monad m) => Producer m ByteString -> ByteStream m ()
 -- @
-toBStream :: (Monad m) => ConduitT () ByteString m () -> ByteStream m ()
-toBStream cnd = runConduit (transPipe lift cnd .| CL.mapM_ B.chunk)
+toBStream :: (Monad m) => ConduitT () ByteString m r -> ByteStream m r
+toBStream (ConduitT k) = go $ k Done
+  where
+    go (HaveOutput p o) = B.fromStrict o *> go p
+    go (NeedInput _ c) = go $ c ()
+    go (Done r) = pure r
+    go (PipeM mp) = B.mwrap $ go <$> mp
+    go (Leftover p _) = go p
 
 -- | Treat a 'Conduit' as a function between 'Stream's.  Subject to
 --   fusion.

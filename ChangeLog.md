@@ -2,6 +2,17 @@
 
 ## Unreleased (Minor) -- YYYY-MM-DD
 
+* Generalise the return types of `toStream` and `toBStream` to return
+  the conduit's return type:
+
+  ```
+  Old: toStream :: (Monad m) => ConduitT () o m () -> Stream (Of o) m ()
+  New: toStream :: (Monad m) => ConduitT () o m r  -> Stream (Of o) m r
+
+  Old: toBStream :: (Monad m) => ConduitT () ByteString m () -> ByteStream m ()
+  New: toBStream :: (Monad m) => ConduitT () ByteString m r  -> ByteStream m r
+  ```
+
 * Stop referring to deprecated names in `conduit` and `streaming-bytestring`.
 * Support GHC 9.0.
 
