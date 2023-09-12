@@ -1,5 +1,3 @@
-{-# LANGUAGE RankNTypes #-}
-
 {- |
    Module      : Streaming.Conduit
    Description : Bidirectional support for the streaming and conduit libraries
@@ -42,9 +40,10 @@ module Streaming.Conduit
 import           Control.Monad             (join, void)
 import           Control.Monad.Trans.Class (lift)
 import           Data.ByteString           (ByteString)
-import           Data.Conduit              (Conduit, ConduitT, Producer, Consumer,
+import           Data.Conduit              (ConduitT,
                                             await, runConduit, transPipe, (.|))
 import qualified Data.Conduit.List         as CL
+import           Data.Void                 (Void)
 import           Streaming                 (Of, Stream)
 import           Streaming.ByteString      (ByteStream)
 import qualified Streaming.ByteString      as B
@@ -95,27 +94,47 @@ fromBStreamProducer = CL.unfoldEitherM B.unconsChunk
 --   It is not possible to generalise this to be a 'ConduitT' as input
 --   values are required.  If you need such functionality, see
 --   'asStream'.
-toStream :: (Monad m) => Producer m o -> Stream (Of o) m ()
+--
+-- It can accept a Conduit @Producer@:
+-- @
+-- toStream :: (Monad m) => Producer m o -> Stream (Of o) m ()
+-- @
+toStream :: (Monad m) => ConduitT () o m () -> Stream (Of o) m ()
 toStream cnd = runConduit (transPipe lift cnd .| CL.mapM_ S.yield)
 
 -- | Convert a 'Producer' to a 'ByteStream' stream.  Subject to
 --   fusion.
-toBStream :: (Monad m) => Producer m ByteString -> ByteStream m ()
+--
+-- It can accept a Conduit @Producer@:
+-- @
+-- toBStream :: (Monad m) => Producer m ByteString -> ByteStream m ()
+-- @
+toBStream :: (Monad m) => ConduitT () ByteString m () -> ByteStream m ()
 toBStream cnd = runConduit (transPipe lift cnd .| CL.mapM_ B.chunk)
 
 -- | Treat a 'Conduit' as a function between 'Stream's.  Subject to
 --   fusion.
-asStream :: (Monad m) => Conduit i m o -> Stream (Of i) m () -> Stream (Of o) m ()
+asStream :: (Monad m) => ConduitT i o m () -> Stream (Of i) m () -> Stream (Of o) m ()
 asStream cnd stream = toStream (fromStream stream .| cnd)
 
 -- | Treat a 'Consumer' as a function which consumes a 'Stream'.
 --   Subject to fusion.
-sinkStream :: (Monad m) => Consumer i m r -> Stream (Of i) m () -> m r
+--
+-- It can accept a Conduit @Consumer@:
+-- @
+-- sinkStream :: (Monad m) => Consumer i m r -> Stream (Of i) m () -> m r
+-- @
+sinkStream :: (Monad m) => ConduitT i Void m r -> Stream (Of i) m () -> m r
 sinkStream cns stream = runConduit (fromStream stream .| cns)
 
 -- | Treat a 'Consumer' as a function which consumes a 'ByteStream'.
 --   Subject to fusion.
-sinkBStream :: (Monad m) => Consumer ByteString m r -> ByteStream m () -> m r
+--
+-- It can accept a Conduit @Consumer@:
+-- @
+-- sinkBStream :: (Monad m) => Consumer ByteString m r -> ByteStream m () -> m r
+-- @
+sinkBStream :: (Monad m) => ConduitT ByteString Void m r -> ByteStream m () -> m r
 sinkBStream cns stream = runConduit (fromBStream stream .| cns)
 
 -- | Treat a function between 'Stream's as a 'Conduit'.  May be

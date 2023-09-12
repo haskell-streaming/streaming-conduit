@@ -2,6 +2,7 @@
 
 ## Unreleased (Minor) -- YYYY-MM-DD
 
+* Stop referring to deprecated names in `conduit` and `streaming-bytestring`.
 * Support GHC 9.0.
 
 ## 0.1.3.0 -- 2023-05-13

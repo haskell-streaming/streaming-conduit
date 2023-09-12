@@ -34,7 +34,7 @@ test-suite conversions
   build-depends:       streaming-conduit
                      , base
                      , conduit
-                     , hspec == 2.4.*
+                     , hspec >= 2.8.0 && < 2.12
                      , streaming
   hs-source-dirs:      test
   default-language:    Haskell2010
