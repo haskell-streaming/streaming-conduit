@@ -11,7 +11,7 @@ category:            Data, Streaming
 build-type:          Simple
 extra-source-files:  ChangeLog.md, README.md
 cabal-version:       >=1.10
-tested-with:         GHC == 7.10.2, GHC == 8.0.2, GHC == 8.2.2, GHC == 8.3.*
+tested-with:         GHC == 8.0.2, GHC == 8.2.2, GHC == 8.3.*, GHC == 9.0.2, GHC == 9.2.4
 
 source-repository head
   type:     git
@@ -19,12 +19,11 @@ source-repository head
 
 library
   exposed-modules:     Streaming.Conduit
-  build-depends:       base >=4.6 && <5
+  build-depends:       base >=4.9 && <5
                      , bytestring
-                     , conduit >= 1.2.11 && < 1.4
+                     , conduit >= 1.3.0 && < 1.4
                      , streaming >= 0.1.3.0 && < 0.3
                      , streaming-bytestring >= 0.3 && < 0.4
-                     , transformers >= 0.2
   hs-source-dirs:      src
   default-language:    Haskell2010
 
@@ -34,7 +33,7 @@ test-suite conversions
   build-depends:       streaming-conduit
                      , base
                      , conduit
-                     , hspec == 2.4.*
+                     , hspec >= 2.8.0 && < 2.12
                      , streaming
   hs-source-dirs:      test
   default-language:    Haskell2010
